@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchAllVideos } from "@/lib/tiktok";
+import { readFile } from "fs/promises";
+
+async function getStoredToken(): Promise<string | null> {
+  if (process.env.TIKTOK_ACCESS_TOKEN) return process.env.TIKTOK_ACCESS_TOKEN;
+  try {
+    const token = await readFile("/tmp/tiktok_token.txt", "utf-8");
+    return token.trim() || null;
+  } catch {
+    return null;
+  }
+}
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
@@ -9,10 +20,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const token = process.env.TIKTOK_ACCESS_TOKEN;
+  const token = await getStoredToken();
   if (!token) {
     return NextResponse.json(
-      { error: "No TikTok token stored. Log in through the web UI first." },
+      { error: "No TikTok token. User needs to log in at the web UI first." },
       { status: 401 }
     );
   }

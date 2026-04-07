@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { exchangeCodeForToken } from "@/lib/tiktok";
+import { writeFile } from "fs/promises";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -69,6 +70,11 @@ export async function GET(req: NextRequest) {
       maxAge: tokenData.expires_in,
       path: "/",
     });
+
+    // Save token for external API access
+    try {
+      await writeFile("/tmp/tiktok_token.txt", tokenData.access_token);
+    } catch {}
 
     // Cleanup OAuth cookies
     response.cookies.delete("tiktok_state");
